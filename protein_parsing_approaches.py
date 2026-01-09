@@ -68,6 +68,34 @@ class ProteinSolver:
             self.trie.insert(p)
 
     # =========================================================================
+    # 0. BRUTE FORCE APPROACH (Recursive without Memoization)
+    # =========================================================================
+    def max_division_brute_force(self):
+        # Start recursion from index 0. No memo table used.
+        return self.solve_recursive(0)
+
+    def solve_recursive(self, idx):
+        # Base Case: End of strand reached.
+        if idx == self.n:
+            return 0
+        if idx > self.n:
+            return 0
+        
+        score = 0
+        # Try all split lengths
+        for split_len in range(1, self.k + 1):
+            if idx + split_len > self.n:
+                break
+            
+            substring = self.strand[idx : idx + split_len]
+            val = 1 if substring in self.protein_markers else 0
+            
+            # Recurse without saving result
+            score = max(score, val + self.solve_recursive(idx + split_len))
+            
+        return score
+
+    # =========================================================================
     # 1. TOP DOWN DP APPROACH (Recursion + Memoization)
     # =========================================================================
     def max_division_top_down_dp(self):
@@ -208,7 +236,7 @@ class ProteinSolver:
 # -----------------------------------------------------------------------------
 
 def run_tests():
-    # Define a suite of test cases to verify correctness of all 3 algorithms.
+    # Define a suite of test cases to verify correctness of all 4 algorithms.
     test_cases = [ 
         {"S": "ACGT", "P": {"A", "CG", "GT"}, "expected_output": 2},
         {"S": "ACGCG", "P": {"AC", "CG", "GCG"}, "expected_output": 2},
@@ -222,11 +250,11 @@ def run_tests():
         {"S": "ATGCGTACGTTAGCTAGGCTACGTAGCTAG", "P": {"ATG", "GTT", "AGC", "TAG", "ACG"}, "expected_output": 7}
     ]
 
-    print("\n" + "="*80)
+    print("\n" + "="*95)
     print("TEST CASE VALIDATION")
-    print("="*80)
-    print(f"{'S':<20} | {'Expected':<8} | {'Top-Down':<8} | {'Bottom-Up':<9} | {'Trie-DP':<8} | {'Status'}")
-    print("-" * 80)
+    print("="*95)
+    print(f"{'S':<20} | {'Expected':<8} | {'Brute':<8} | {'Top-Down':<8} | {'Bottom-Up':<9} | {'Trie-DP':<8} | {'Status'}")
+    print("-" * 95)
 
     for tc in test_cases:
         S = tc["S"]
@@ -238,21 +266,24 @@ def run_tests():
         # Instantiate the solver
         solver = ProteinSolver(S, P, k)
         
-        # Run all three methods
+        # Run all four methods
+        # Note: Validating Brute Force on small strings (len < 30) is fine.
+        # The last test case is length 30, might be slightly slow but acceptable for validation.
+        res_bf = solver.max_division_brute_force()
         res_td = solver.max_division_top_down_dp()
         res_bu = solver.max_division_bottom_up_dp()
         res_trie = solver.max_division_trie_dp()
         expected = tc["expected_output"]
 
         # Check if all match the expected output
-        passed = (res_td == expected) and (res_bu == expected) and (res_trie == expected)
+        passed = (res_bf == expected) and (res_td == expected) and (res_bu == expected) and (res_trie == expected)
         status = "PASS" if passed else "FAIL"
         
         # Truncate S for display if too long
         s_disp = S if len(S) <= 18 else S[:15] + "..."
         
         # Print row in the results table
-        print(f"{s_disp:<20} | {expected:<8} | {res_td:<8} | {res_bu:<9} | {res_trie:<8} | {status}")
+        print(f"{s_disp:<20} | {expected:<8} | {res_bf:<8} | {res_td:<8} | {res_bu:<9} | {res_trie:<8} | {status}")
 
 # -----------------------------------------------------------------------------
 # 2. Benchmark Logic
@@ -272,17 +303,17 @@ def generate_markers(num_markers, max_k):
     return markers
 
 def run_benchmarks():
-    print("\n" + "="*95)
+    print("\n" + "="*110)
     print("TIME COMPLEXITY COMPARISON (Time in seconds)")
-    print("="*95)
+    print("="*110)
     # Table Header
-    header = f"{'N (Length)':<12} | {'Top-Down':<12} | {'Bottom-Up':<12} | {'Trie-DP':<12} | {'Improvement':<12}"
+    header = f"{'N (Length)':<12} | {'Brute':<12} | {'Top-Down':<12} | {'Bottom-Up':<12} | {'Trie-DP':<12} | {'Improvement':<12}"
     print(header)
     print("-" * len(header))
 
     # Define range of N (sequence lengths) to test.
-    # We go up to 50,000 to show the performance gap clearly.
-    N_values = [100, 500, 1000, 2000, 5000, 10000, 20000, 50000]
+    # We include very small N for Brute Force comparison.
+    N_values = [20, 50, 100, 500, 1000, 2000, 5000, 10000, 20000, 50000]
     
     for n in N_values:
         # Fixed parameters for the benchmark
@@ -295,7 +326,18 @@ def run_benchmarks():
         
         solver = ProteinSolver(S, P, k)
 
-        # 1. Top Down Benchmark
+        # 1. Brute Force Benchmark
+        # Exponential complexity O(k^N) or similar.
+        # Only feasible for very small N (e.g. N <= 25).
+        if n <= 25:
+            start = time.time()
+            solver.max_division_brute_force()
+            t_bf_val = time.time() - start
+            s_bf = f"{t_bf_val:.4f}s"
+        else:
+            s_bf = "Skipped"
+
+        # 2. Top Down Benchmark
         # We skip Top-Down for N > 2500 because deep recursion is very slow in Python
         # and risks hitting recursion limits despite sys.setrecursionlimit.
         if n <= 2500:
@@ -306,13 +348,13 @@ def run_benchmarks():
         else:
             s_td = "Skipped"
 
-        # 2. Bottom Up Benchmark
+        # 3. Bottom Up Benchmark
         start = time.time()
         solver.max_division_bottom_up_dp()
         t_bu_val = time.time() - start
         s_bu = f"{t_bu_val:.4f}s"
 
-        # 3. Trie DP Benchmark
+        # 4. Trie DP Benchmark
         start = time.time()
         solver.max_division_trie_dp()
         t_trie_val = time.time() - start
@@ -327,7 +369,7 @@ def run_benchmarks():
             s_imp = "N/A"
 
         # Print benchmark row
-        print(f"{n:<12} | {s_td:<12} | {s_bu:<12} | {s_trie:<12} | {s_imp:<12}")
+        print(f"{n:<12} | {s_bf:<12} | {s_td:<12} | {s_bu:<12} | {s_trie:<12} | {s_imp:<12}")
 
 if __name__ == "__main__":
     # First, run validation to ensure correctness
