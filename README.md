@@ -14,7 +14,7 @@ The following approaches are implemented:
    Recursive dynamic programming using memoization based on the provided logic.
 
 2. **Bottom-Up DP (Tabulation)**  
-   Iterative dynamic programming approach without recursion.
+   An iterative dynamic programming approach without recursion.
 
 3. **Trie-based DP**  
    Optimized bottom-up DP using a Trie (prefix tree) to eliminate redundant string matching.
@@ -137,8 +137,7 @@ Parameters: `k = 50`, `|P| = 1000`.
 | 50,000 | Skipped | 0.6903s | 0.0536s | 92.2% |
 
 > **Note:**  
-> The Top-Down DP approach was skipped for larger values of `N` due to recursion depth limitations.
-
+> Note on "Skipped": The Top-Down approach relies on recursion. For large $N$ (string length), the recursion depth exceeds Python's default limits and incurs significant function call overhead. We skip it for $N > 2,500$ to prevent RecursionError crashes and excessive runtimes.
 ---
 
 ## Conclusion
