@@ -110,7 +110,6 @@ It contains a `ProteinSolver` class with the following methods:
 | ATGCGAT | 3 | 3 | 3 | 3 | 3 | PASS |
 | ACGTAC | 0 | 0 | 0 | 0 | 0 | PASS |
 | ACGT | 1 | 1 | 1 | 1 | 1 | PASS |
-| (Empty) | 0 | 0 | 0 | 0 | 0 | PASS |
 | ACGT | 2 | 2 | 2 | 2 | 2 | PASS |
 | ATGCGT... | 7 | 7 | 7 | 7 | 7 | PASS |
 
